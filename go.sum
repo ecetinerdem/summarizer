@@ -1,0 +1,8 @@
+github.com/sashabaranov/go-openai v1.41.2 h1:vfPRBZNMpnqu8ELsclWcAvF19lDNgh1t6TVfFFOPiSM=
+github.com/sashabaranov/go-openai v1.41.2/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=
+github.com/tsawler/prose/v3 v3.0.0-beta2 h1:Kl+K5Zp+PMffpF8armlzXyzVXOp8RVAYIZHVKh5Lr+U=
+github.com/tsawler/prose/v3 v3.0.0-beta2/go.mod h1:sPUW6WuYbZwwTCsp72BsCD4nbJzMprY+hYFhD3KfnRU=
+gonum.org/v1/gonum v0.14.0 h1:2NiG67LD1tEH0D7kM+ps2V+fXmsAnpUeec7n8tcr4S0=
+gonum.org/v1/gonum v0.14.0/go.mod h1:AoWeoz0becf9QMWtE8iWXNXc27fK4fNeHNf/oMejGfU=
+gopkg.in/neurosnap/sentences.v1 v1.0.7 h1:gpTUYnqthem4+o8kyTLiYIB05W+IvdQFYR29erfe8uU=
+gopkg.in/neurosnap/sentences.v1 v1.0.7/go.mod h1:YlK+SN+fLQZj+kY3r8DkGDhDr91+S3JmTb5LSxFRQo0=
