@@ -57,3 +57,5 @@ type TextSummarizer struct {
 	actualMethod      string
 	fallbackReason    string
 }
+
+type Options func(*TextSummarizer)
