@@ -32,8 +32,10 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 	wordTFIDF := calculateTFIDF(ts.doc)
 
 	// Score sentences using multiple features
+	sentenceScores := make(map[string]float64)
 
 	// Get named entities from the document for entity based scoring
+	entities := extractNamedEntities(ts.doc)
 
 	// Calculate sentence position weights (first and last paragraph typically more important)
 
@@ -138,4 +140,28 @@ func splitIntoPseudoDocuments(doc *prose.Document) []string {
 		}
 	}
 	return docs
+}
+
+func extractNamedEntities(doc *prose.Document) map[string]float64 {
+	entities := make(map[string]float64)
+
+	// Use prose's NER functionality
+
+	for _, ent := range doc.Entities() {
+		// Weight entities by type
+		weight := 1.0
+		switch ent.Label {
+		case "PERSON", "ORG", "GPE":
+			weight = 1.2
+		case "DATE", "TIME", "MONEY", "PERCENT":
+			weight = 1.0
+		default:
+			weight = 0.8
+
+		}
+
+		entities[strings.ToLower(ent.Text)] = weight
+	}
+
+	return entities
 }
