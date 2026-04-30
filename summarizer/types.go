@@ -42,7 +42,7 @@ type Summarizer interface {
 type TextSummarizer struct {
 	doc               *prose.Document
 	text              string
-	summaru           string
+	summary           string
 	keywords          []string
 	summaryRate       float64
 	targetPercentage  float64
