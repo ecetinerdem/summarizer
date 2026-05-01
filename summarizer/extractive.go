@@ -50,9 +50,31 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 	similarityMatrix := buildSentenceSimilarityMatrix(sentences)
 
 	// Analyze sentence relationships
+	sentenceRelationShips := analyzeSentenceRelationShips(sentences)
 
 	// Sort by score (descending)
+	for i, sentence := range sentences {
+		sentenceText := sentence.Text
+		words := strings.Fields(sentenceText)
 
+		// Initialize sentence score
+		score := 0.0
+
+		// 1. TF-IDF based scoreing
+		wordScore := calculateSentenceTFIDFScore(words, wordTFIDF)
+
+		score += wordScore * 0.3 // 30% weight for TFIDF score
+
+		// 2. Sentence position scorings
+		positionScore := positionWeights[i]
+		score += positionScore * 0.15 // 15% weight for position score
+
+		// 3. Sentence length scoring
+		lengthScore := calculateLengthScore(words)
+
+		// 4. Named entitiy scoring
+
+	}
 	// Take top-ranked sentences
 
 }
@@ -287,5 +309,94 @@ func buildSentenceSimilarityMatrix(sentences []prose.Sentence) [][]float64 {
 
 	// Return matrix
 	return matrix
+
+}
+
+func analyzeSentenceRelationShips(sentences []prose.Sentence) []float64 {
+	sentenceCount := len(sentences)
+	scores := make([]float64, sentenceCount)
+
+	if sentenceCount <= 1 {
+		return scores
+	}
+
+	// Look for connective words and phrases
+	connectiveWords := map[string]bool{
+		"therefore": true, "thus": true, "consequently": true, "hence": true,
+		"accordingly": true, "as a result": true, "so": true, "then": true,
+		"subsequently": true, "afterward": true, "moreover": true, "furthermore": true,
+		"in addition": true, "besides": true, "similarly": true, "likewise": true,
+		"however": true, "nevertheless": true, "nonetheless": true, "although": true,
+		"despite": true, "in spite of": true, "conversely": true, "on the contrary": true,
+		"instead": true, "rather": true, "on the other hand": true, "for example": true,
+		"for instance": true, "namely": true, "specifically": true, "such as": true,
+		"in particular": true, "in other words": true, "that is": true, "indeed": true,
+		"in fact": true, "actually": true, "to illustrate": true, "to demonstrate": true,
+		"finally": true, "lastly": true, "in conclusion": true, "to conclude": true,
+		"in summary": true, "to summarize": true, "in short": true, "overall": true,
+	}
+
+	// Check each sentence for connective words and phrases
+	for i, sentence := range sentences {
+		text := strings.ToLower(sentence.Text)
+
+		// Check for connective words at the beginning
+		for connective := range connectiveWords {
+			if strings.HasPrefix(text, connective) {
+				scores[i] += 0.5
+				break
+			}
+		}
+
+		// Check for pronouns
+		pronouns := []string{"this", "that", "these", "those", "it", "they", "he", "she"}
+		for _, pronoun := range pronouns {
+			if strings.HasPrefix(text, pronoun+" ") {
+				scores[i] += 0.3
+				break
+			}
+		}
+	}
+	return scores
+}
+
+func calculateSentenceTFIDFScore(words []string, wordTFIDF map[string]float64) float64 {
+	if len(words) == 0 {
+		return 0.0
+	}
+
+	totalScore := 0.0
+	significantWords := 0.0
+
+	for _, word := range words {
+		word := strings.ToLower(word)
+		if len(word) <= 2 || isStopWord(word) || !isAlphaNumeric(word) {
+			continue
+		}
+		totalScore += wordTFIDF[word]
+		significantWords++
+	}
+
+	if significantWords == 0 {
+		return 0.0
+	}
+
+	return totalScore / float64(significantWords)
+}
+
+func calculateLengthScore(words []string) float64 {
+	wordCount := len(words)
+
+	if wordCount < 3 {
+		return 0.1
+	} else if wordCount <= 8 {
+		return 0.5 + (0.5 * float64(wordCount-3) / 5.0) // Gradually increase score up to 8 words
+	} else if wordCount <= 20 {
+		return 1.0 // Peak importance
+	} else if wordCount <= 40 {
+		return 1.0 + (0.7 * float64(wordCount-20) / 20.0) // Gradually decrease the score
+	} else {
+		return 0.3 // Long sentence gets lower score
+	}
 
 }
