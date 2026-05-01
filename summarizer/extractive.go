@@ -73,6 +73,16 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 		lengthScore := calculateLengthScore(words)
 
 		// 4. Named entitiy scoring
+		entityScore := calculateEntityScore(entitySentences)
+		score += entityScore * 0.15 // 15% weight for entity score
+
+		// 5. Keyword overlap
+
+		// 6. Text rank-like score using similarity matrix
+
+		// 7. Cohesion score- How well this sentence connects to others
+
+		sentenceScores[sentenceText] = score
 
 	}
 	// Take top-ranked sentences
@@ -399,4 +409,27 @@ func calculateLengthScore(words []string) float64 {
 		return 0.3 // Long sentence gets lower score
 	}
 
+}
+
+func calculateEntityScore(entitySentences map[int]float64) float64 {
+	// Noramlize entity score to 0-1 range
+	maxScore := 0.0
+	for _, score := range entitySentences {
+		if score > maxScore {
+			maxScore = score
+		}
+	}
+
+	if maxScore == 0 {
+		return 0.0
+	}
+
+	// Find the score for this sentence
+	for i, score := range entitySentences {
+		if entitySentences[i] > 0 {
+			return score / maxScore
+		}
+	}
+
+	return 0.0
 }
