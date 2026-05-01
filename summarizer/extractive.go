@@ -45,7 +45,9 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 
 	// Find title keywords if available
 	titleKeyWords := extractTitleKeyWords(sentences)
+
 	// Create a graph representation for Textrank like algorithm
+	similarityMatrix := buildSentenceSimilarityMatrix(sentences)
 
 	// Analyze sentence relationships
 
@@ -225,4 +227,65 @@ func extractTitleKeyWords(sentences []prose.Sentence) map[string]bool {
 		}
 	}
 	return keyWords
+}
+
+func buildSentenceSimilarityMatrix(sentences []prose.Sentence) [][]float64 {
+	// Get the total number of sentences to determine matrix dimensions
+	sentenceCount := len(sentences)
+
+	// Initialize the matrix
+	matrix := make([][]float64, sentenceCount)
+
+	// Preprocessing step: create words sets for each sentence
+	sentenceWords := make([]map[string]bool, sentenceCount)
+	for i, sentence := range sentences {
+		// Split the sentence text into a slice of words using white space as delimeter
+		words := strings.Fields(sentence.Text)
+		// Initialize the map(set) for the current sentences word
+		wordSet := make(map[string]bool)
+		// Iterate through each word in the sentences
+		for _, word := range words {
+			word = strings.ToLower(word)
+			if !isStopWord(word) && isAlphaNumeric(word) {
+				wordSet[word] = true
+			}
+		}
+		sentenceWords[i] = wordSet
+	}
+	// Main loop: calculate Jaccard similarity
+	for i := 0; i < sentenceCount; i++ {
+		for j := 0; j < sentenceCount; j++ {
+			// A sentence is perfectly similar to itself. Set dioganal values to 1.0
+			if i == j {
+				matrix[i][j] = 1.0
+				continue
+			}
+
+			intersection := 0
+			// Calculate the size of the intersection of the two word sets
+			// The intersection contains words that are common to both sets
+			for word := range sentenceWords[i] {
+				if sentenceWords[j][word] {
+					intersection++
+				}
+			}
+
+			// Calculate the size of union of the two word sets
+			// The union is the total number of unique words from both sets
+			// The formula |A U B| = |A| + |B| - |A intersect B|
+			unionSize := len(sentenceWords[i]) + len(sentenceWords[j]) - intersection
+
+			// Calculate the Jaccard similarity score
+			if unionSize > 0 {
+				matrix[i][j] = float64(intersection) / float64(unionSize)
+			} else {
+				matrix[i][j] = 0
+			}
+
+		}
+	}
+
+	// Return matrix
+	return matrix
+
 }
