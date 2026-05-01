@@ -38,7 +38,7 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 	entities := extractNamedEntities(ts.doc)
 
 	// Calculate sentence position weights (first and last paragraph typically more important)
-
+	positionWeights := calculatePositionWeights(sentences, sentenceCount)
 	// Create a map of sentences containing important entities
 
 	// Find title keywords if available
@@ -164,4 +164,23 @@ func extractNamedEntities(doc *prose.Document) map[string]float64 {
 	}
 
 	return entities
+}
+
+func calculatePositionWeights(sentences []prose.Sentence, sentenceCount int) []float64 {
+	weights := make([]float64, sentenceCount)
+
+	// Position based weighting - ifrst and last paragraph tend to be more important
+
+	for i := range sentences {
+		// First few sentences get higher weight
+		if i < sentenceCount/5 {
+			weights[i] = 1.0 - (0.8 * float64(i) / float64(sentenceCount/5))
+		} else if i >= sentenceCount*4/5 {
+			weights[i] = 0.4 + (0.4 * float64(i-sentenceCount*4/5) / float64(sentenceCount/5))
+		} else {
+			weights[i] = 0.2
+		}
+	}
+
+	return weights
 }
