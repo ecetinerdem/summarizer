@@ -71,14 +71,19 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 
 		// 3. Sentence length scoring
 		lengthScore := calculateLengthScore(words)
+		score += lengthScore * 0.1 // 10% weight for sentence length score
 
 		// 4. Named entitiy scoring
 		entityScore := calculateEntityScore(entitySentences)
 		score += entityScore * 0.15 // 15% weight for entity score
 
 		// 5. Keyword overlap
+		titleScore := calculateTitleOverlap(words, titleKeyWords)
+		score += titleScore * 0.1 // 10% weight for title overlap
 
 		// 6. Text rank-like score using similarity matrix
+		textRankScore := calculateTextRankScore(i, similarityMatrix)
+		score += textRankScore * 0.1 // 10% weight for text rank score
 
 		// 7. Cohesion score- How well this sentence connects to others
 
@@ -429,6 +434,45 @@ func calculateEntityScore(entitySentences map[int]float64) float64 {
 		if entitySentences[i] > 0 {
 			return score / maxScore
 		}
+	}
+
+	return 0.0
+}
+
+func calculateTitleOverlap(words []string, titleKeyWords map[string]bool) float64 {
+
+	if len(titleKeyWords) == 0 {
+		return 0.0
+	}
+
+	matches := 0
+
+	for _, word := range words {
+		if titleKeyWords[strings.ToLower(word)] {
+			matches++
+		}
+	}
+
+	return float64(matches) / float64(len(titleKeyWords))
+}
+
+func calculateTextRankScore(sentenceIndex int, similarityMatrix [][]float64) float64 {
+	sentenceCount := len(similarityMatrix)
+	if sentenceCount == 0 {
+		return 0.0
+	}
+
+	// Calculate the sum of similarities with other sentences
+	sum := 0.0
+	for i := 0; i < sentenceCount; i++ {
+		if i != sentenceIndex {
+			sum += similarityMatrix[sentenceIndex][i]
+		}
+	}
+
+	// Normalize
+	if sentenceCount > 1 {
+		return sum/float64(sentenceCount) - 1
 	}
 
 	return 0.0
