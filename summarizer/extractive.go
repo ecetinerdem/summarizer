@@ -2,12 +2,21 @@ package summarizer
 
 import (
 	"math"
+	"sort"
 	"strings"
 	"unicode"
 
 	"github.com/bbalet/stopwords"
 	"github.com/tsawler/prose/v3"
 )
+
+// ScoredSentences holds sentences ranked by score
+
+type ScoredSentence struct {
+	Text  string
+	Score float64
+	Index int
+}
 
 func (ts *TextSummarizer) generateExtractiveSummary() string {
 	sentences := ts.doc.Sentences()
@@ -86,12 +95,49 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 		score += textRankScore * 0.1 // 10% weight for text rank score
 
 		// 7. Cohesion score- How well this sentence connects to others
+		cohesionScore := sentenceRelationShips[i]
+		score += cohesionScore * 0.1 // 10% weight for cohesion score
 
 		sentenceScores[sentenceText] = score
 
 	}
-	// Take top-ranked sentences
 
+	//Sort by score(descending)
+	var scoredSentences []ScoredSentence
+	for i, sentence := range sentences {
+		scoredSentences = append(scoredSentences, ScoredSentence{
+			Text:  sentence.Text,
+			Score: sentenceScores[sentence.Text],
+			Index: i,
+		})
+	}
+
+	sort.Slice(scoredSentences, func(i, j int) bool {
+		return scoredSentences[i].Score > scoredSentences[j].Score
+	})
+
+	// Take top-ranked sentences
+	if keepCount < len(scoredSentences) {
+		topSentences := scoredSentences[:keepCount]
+
+		// Sort back by the original position to maintain document flow
+		sort.Slice(topSentences, func(i, j int) bool {
+			return topSentences[i].Index < topSentences[j].Index
+		})
+		// Add redundancy elimination - remove very similar sentences
+		topSentences = eliminateRedundancy(topSentences)
+
+		// Combine top sentences to form the summary
+		var summaryBuilder strings.Builder
+
+		for _, s := range topSentences {
+			summaryBuilder.WriteString(s.Text)
+			summaryBuilder.WriteString(" ")
+		}
+		return strings.TrimSpace(summaryBuilder.String())
+
+	}
+	return ts.text
 }
 
 func calculateTFIDF(doc *prose.Document) map[string]float64 {
@@ -476,4 +522,98 @@ func calculateTextRankScore(sentenceIndex int, similarityMatrix [][]float64) flo
 	}
 
 	return 0.0
+}
+
+func eliminateRedundancy(sentences []ScoredSentence) []ScoredSentence {
+	if len(sentences) <= 1 {
+		return sentences
+	}
+
+	// Sort by original positon
+	sort.Slice(sentences, func(i, j int) bool {
+		return sentences[i].Index < sentences[j].Index
+	})
+
+	var result []ScoredSentence
+
+	for i, sentence := range sentences {
+		// Always keep the first sentence
+		if i == 0 {
+			result = append(result, sentence)
+			continue
+		}
+
+		// Chek similarity with previous sentence
+		isDuplicate := false
+		for j := 0; j < len(result); j++ {
+			similarity := calculateJaccardSimilarity(sentence.Text, result[j].Text)
+			if similarity > 0.6 {
+				isDuplicate = true
+
+				// If current score has higher score than replace previous one
+				if sentence.Score > result[j].Score {
+					result[j] = sentence
+				}
+				break
+			}
+		}
+		if !isDuplicate {
+			result = append(result, sentence)
+		}
+
+	}
+	return result
+}
+
+func calculateJaccardSimilarity(text1, text2 string) float64 {
+	words1 := strings.Fields(strings.ToLower(text1))
+	words2 := strings.Fields(strings.ToLower(text2))
+
+	// Filter stop words
+
+	var filtered1, filtered2 []string
+
+	for _, word := range words1 {
+		if !isStopWord(word) {
+			filtered1 = append(filtered1, word)
+		}
+	}
+
+	for _, word := range words2 {
+		if !isStopWord(word) {
+			filtered2 = append(filtered2, word)
+		}
+	}
+
+	// Creates sets
+	set1 := make(map[string]bool)
+	set2 := make(map[string]bool)
+
+	for _, word := range filtered1 {
+		set1[word] = true
+	}
+
+	for _, word := range filtered2 {
+		set2[word] = true
+	}
+
+	// Calculate intersection
+	intersection := 0
+
+	for word := range set1 {
+		if set2[word] {
+			intersection++
+		}
+	}
+
+	// Calculate union
+
+	union := len(set1) + len(set2) - intersection
+
+	if union == 0 {
+		return 0.0
+	}
+
+	return float64(intersection) / float64(union)
+
 }
