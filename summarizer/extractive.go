@@ -39,10 +39,12 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 
 	// Calculate sentence position weights (first and last paragraph typically more important)
 	positionWeights := calculatePositionWeights(sentences, sentenceCount)
+
 	// Create a map of sentences containing important entities
+	entitySentences := mapEntitiesToSentences(sentences, entities)
 
 	// Find title keywords if available
-
+	titleKeyWords := extractTitleKeyWords(sentences)
 	// Create a graph representation for Textrank like algorithm
 
 	// Analyze sentence relationships
@@ -183,4 +185,44 @@ func calculatePositionWeights(sentences []prose.Sentence, sentenceCount int) []f
 	}
 
 	return weights
+}
+
+func mapEntitiesToSentences(sentences []prose.Sentence, entities map[string]float64) map[int]float64 {
+	sentenceEntityScores := make(map[int]float64)
+
+	for i, sentence := range sentences {
+		score := 0.0
+		text := strings.ToLower(sentence.Text)
+
+		for entity, weight := range entities {
+			if strings.Contains(text, strings.ToLower(entity)) {
+				score += weight
+			}
+		}
+		sentenceEntityScores[i] = score
+	}
+
+	return sentenceEntityScores
+}
+
+func extractTitleKeyWords(sentences []prose.Sentence) map[string]bool {
+	keyWords := make(map[string]bool)
+
+	// No sentences, return empty keywords
+	if len(sentences) == 0 {
+		return keyWords
+	}
+
+	// Assume first sentence might be title
+	potentialTitle := sentences[0].Text
+	words := strings.Fields(potentialTitle)
+
+	for _, word := range words {
+		word = strings.ToLower(word)
+		// Keep only significant word
+		if len(word) > 3 || !isStopWord(word) || !isAlphaNumeric(word) {
+			keyWords[word] = true
+		}
+	}
+	return keyWords
 }
