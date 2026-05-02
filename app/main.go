@@ -56,6 +56,7 @@ func main() {
 
 	if *apiMode {
 		fmt.Printf("Starting api server on port %s...\n", *port)
+		startAPIServer(*port)
 	} else {
 		if config.FilePath == "" {
 			fmt.Println("Error: Please provide a file path with -file flag")
