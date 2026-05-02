@@ -140,7 +140,7 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 	return ts.text
 }
 
-func (ts *TextSummarizer) ExtractiveKeyWords(count int) []string {
+func (ts *TextSummarizer) ExtractKeyWords(count int) []string {
 	wordFrequency := make(map[string]int)
 	for _, token := range ts.doc.Tokens() {
 		word := strings.ToLower(token.Text)
@@ -181,7 +181,7 @@ func (ts *TextSummarizer) ExtractiveKeyWords(count int) []string {
 
 func (ts *TextSummarizer) GetResponse() SummaryResponse {
 	summary := ts.GenerateSummary()
-	keywords := ts.ExtractiveKeyWords(10)
+	keywords := ts.ExtractKeyWords(10)
 
 	// Calculate metrics
 	summarySentenceCount := 0
