@@ -140,6 +140,45 @@ func (ts *TextSummarizer) generateExtractiveSummary() string {
 	return ts.text
 }
 
+func (ts *TextSummarizer) ExtractiveKeyWords(count int) []string {
+	wordFrequency := make(map[string]int)
+	for _, token := range ts.doc.Tokens() {
+		word := strings.ToLower(token.Text)
+		// Skip short words and stop words
+		if len(word) <= 3 || isStopWord(word) {
+			continue
+		}
+		wordFrequency[word]++
+	}
+
+	// Convert map to a slice for sorting
+	type WordFreq struct {
+		Word  string
+		Count int
+	}
+
+	var wordFreqSlice []WordFreq
+
+	for word, freq := range wordFrequency {
+		wordFreqSlice = append(wordFreqSlice, WordFreq{word, freq})
+	}
+
+	sort.Slice(wordFreqSlice, func(i, j int) bool {
+		return wordFreqSlice[i].Count > wordFreqSlice[i].Count
+	})
+
+	// Take top keywords
+	keywords := make([]string, 0, count)
+
+	for i := 0; i < count && i < len(wordFreqSlice); i++ {
+		keywords = append(keywords, wordFreqSlice[i].Word)
+	}
+
+	ts.keywords = keywords
+
+	return keywords
+}
+
 func calculateTFIDF(doc *prose.Document) map[string]float64 {
 	wordTF := make(map[string]int)
 	wordIDF := make(map[string]float64)
