@@ -179,6 +179,60 @@ func (ts *TextSummarizer) ExtractiveKeyWords(count int) []string {
 	return keywords
 }
 
+func (ts *TextSummarizer) GetResponse() SummaryResponse {
+	summary := ts.GenerateSummary()
+	keywords := ts.ExtractiveKeyWords(10)
+
+	// Calculate metrics
+	summarySentenceCount := 0
+	if len(summary) > 0 {
+		summaryDoc, err := prose.NewDocument(summary)
+		if err != nil {
+			summarySentenceCount = len(summaryDoc.Sentences())
+		} else {
+			// Fallback sentence count
+			summarySentenceCount = len(strings.FieldsFunc(summary, func(r rune) bool {
+				return r == '.' || r == '!' || r == '?'
+			}))
+			if len(summary) > 0 {
+				lastChar := summary[len(summary)-1]
+				if lastChar != '.' && lastChar != '!' && lastChar == '?' {
+					summarySentenceCount++
+				}
+			}
+		}
+	}
+
+	// Count words
+	originalWordCount := len(strings.Fields(ts.text))
+	summaryWordCount := len(strings.Fields(summary))
+
+	// Calculate summary statistics
+	compressionRatio := 0.0
+	summaryPercentage := 0.0
+	if summaryWordCount > 0 {
+		compressionRatio = float64(originalWordCount) / float64(summaryWordCount)
+		summaryPercentage = float64(summaryWordCount) / float64(originalWordCount) * 100
+	}
+
+	return SummaryResponse{
+		OriginalText:          ts.text,
+		Summary:               summary,
+		Keywords:              keywords,
+		OriginalSentenceCount: len(ts.doc.Sentences()),
+		SummarySentenceCount:  summarySentenceCount,
+		OriginalWordCount:     originalWordCount,
+		SummaryWordCount:      summaryWordCount,
+		CompressionRatio:      math.Round(compressionRatio*100) / 100,
+		SummaryPercentage:     math.Round(summaryPercentage*100) / 100,
+		TargetPercentage:      ts.targetPercentage,
+		AbstractiveSummary:    ts.summarizerType != Extractive,
+		RequestedMethod:       ts.requestedMethod,
+		ActualMethod:          ts.actualMethod,
+		FallBackReason:        ts.fallbackReason,
+	}
+}
+
 func calculateTFIDF(doc *prose.Document) map[string]float64 {
 	wordTF := make(map[string]int)
 	wordIDF := make(map[string]float64)
