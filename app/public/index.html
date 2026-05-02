@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Text Summarizer</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--dark-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .text-area-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .text-container {
+            flex: 1;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .text-input {
+            height: 250px;
+        }
+
+        .output-container {
+            margin-top: 20px;
+            background-color: var(--light-color);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .output-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .file-upload-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+
+        .file-name {
+            margin-left: 10px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .options-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .range-display {
+            display: block;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-top: 5px;
+        }
+
+        .keywords-container {
+            margin-top: 15px;
+        }
+
+        .keyword {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        #errorMessage {
+            color: var(--danger-color);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .text-area-container {
+                flex-direction: column;
+            }
+            
+            .output-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Text Summarizer</h1>
+        
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="input-tab">Input</button>
+                <button class="tab-button" data-tab="output-tab">Results</button>
+            </div>
+            
+            <div class="tab-content">
+                <div id="input-tab" class="tab-pane active">
+                    <div class="form-group">
+                        <label for="text-input">Enter the text to summarize:</label>
+                        <textarea id="text-input" class="text-input" placeholder="Paste or type your text here..."></textarea>
+                        
+                        <div class="form-group file-upload-container">
+                            <label for="file-input">Or upload a file:</label>
+                            <input type="file" id="file-input">
+                            <span id="file-name" class="file-name"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="options-container">
+                        <div class="form-group">
+                            <label for="summarizer-type">Summarization Method:</label>
+                            <select id="summarizer-type">
+                                <option value="extractive">Extractive (Select existing sentences)</option>
+                                <option value="abstractive_openai">Abstractive - OpenAI (Generate new text)</option>
+                                <option value="abstractive_huggingface">Abstractive - Hugging Face (Generate new text)</option>
+                                <option value="hybrid">Hybrid (Combine both approaches)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Extractive options -->
+                        <div id="extractive-options" class="option-group">
+                            <label for="summary-rate">Summary Rate: <span id="summary-rate-value">30%</span></label>
+                            <input type="range" id="summary-rate" min="10" max="90" value="30">
+                            <div class="range-values">
+                                <span>10%</span>
+                                <span>90%</span>
+                            </div>
+                            <small>Controls how much of the original text to keep</small>
+                        </div>
+                        
+                        <!-- Abstractive options common -->
+                        <div id="abstractive-options" class="option-group hidden">
+                            <label for="target-percent">Target Percentage: <span id="target-percent-value">30%</span></label>
+                            <input type="range" id="target-percent" min="10" max="70" value="30">
+                            <div class="range-values">
+                                <span>10%</span>
+                                <span>70%</span>
+                            </div>
+                            <small>Target length of summary as percentage of original</small>
+                        </div>
+                        
+                        <!-- OpenAI specific options -->
+                        <div id="openai-options" class="option-group hidden">
+                            <div class="form-group">
+                                <label for="openai-key">OpenAI API Key:</label>
+                                <input type="text" id="openai-key" placeholder="sk-...">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="openai-model">Model:</label>
+                                <select id="openai-model">
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    <option value="gpt-4">GPT-4</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                    <option value="llama3.2:1b">llama3.2:1b</option>
+                                    <option value="gemma2:2b">gemma2:2b</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="openai-url">Custom Base URL (Optional):</label>
+                                <input type="text" id="openai-url" placeholder="https://api.openai.com/v1">
+                            </div>
+                        </div>
+                        
+                        <!-- Hugging Face specific options -->
+                        <div id="huggingface-options" class="option-group hidden">
+                            <div class="form-group">
+                                <label for="hf-key">Hugging Face API Key:</label>
+                                <input type="text" id="hf-key" placeholder="hf_...">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hf-model">Model:</label>
+                                <select id="hf-model">
+                                    <option value="facebook/bart-large-cnn">BART Large CNN</option>
+                                    <option value="t5-base">T5 Base</option>
+                                    <option value="google/pegasus-cnn_dailymail">Pegasus CNN/DailyMail</option>
+                                    <option value="allenai/led-large-16384-cnn">LED Large CNN</option>
+                                    <option value="sshleifer/distilbart-cnn-12-6">DistilBART CNN</option>
+                                    <option value="google/flan-t5-base">Flan-T5 Base</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hf-url">Custom Inference URL (Optional):</label>
+                                <input type="text" id="hf-url" placeholder="https://api-inference.huggingface.co/models/">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="max-length">Maximum Summary Length (words):</label>
+                                <input type="number" id="max-length" placeholder="Auto (based on percentage)" min="10">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="min-length">Minimum Summary Length (words):</label>
+                                <input type="number" id="min-length" placeholder="Auto (based on percentage)" min="10">
+                            </div>
+                        </div>
+                        
+                        <!-- Hybrid options show both OpenAI and HF -->
+                        <div id="hybrid-options" class="option-group hidden">
+                            <p>Hybrid summarization uses both extractive techniques and one of the abstractive methods:</p>
+                            
+                            <div class="form-group">
+                                <label for="hybrid-mode">Preferred Abstractive Engine:</label>
+                                <select id="hybrid-mode">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="huggingface">Hugging Face</option>
+                                </select>
+                            </div>
+                            
+                            <div id="hybrid-openai-options">
+                                <div class="form-group">
+                                    <label for="hybrid-openai-key">OpenAI API Key:</label>
+                                    <input type="text" id="hybrid-openai-key" placeholder="sk-...">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="hybrid-openai-model">Model:</label>
+                                    <select id="hybrid-openai-model">
+                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                        <option value="gpt-4">GPT-4</option>
+                                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                        <option value="llama3.2:1b">llama3.2:1b</option>
+                                        <option value="gemma2:2b">gemma2:2b</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="hybrid-huggingface-options" class="hidden">
+                                <div class="form-group">
+                                    <label for="hybrid-hf-key">Hugging Face API Key:</label>
+                                    <input type="text" id="hybrid-hf-key" placeholder="hf_...">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="hybrid-hf-model">Model:</label>
+                                    <select id="hybrid-hf-model">
+                                        <option value="facebook/bart-large-cnn">BART Large CNN</option>
+                                        <option value="t5-base">T5 Base</option>
+                                        <option value="google/pegasus-cnn_dailymail">Pegasus CNN/DailyMail</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="errorMessage"></div>
+                    
+                    <button id="summarize-btn" class="summarize-btn">Generate Summary</button>
+                    
+                    <div class="loading" id="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Generating summary...</p>
+                    </div>
+                </div>
+                
+                <div id="output-tab" class="tab-pane hidden">
+                    <div class="output-container hidden" id="results-container">
+                        <div class="output-header">
+                            <h2>Summary</h2>
+                            <button id="copy-btn">Copy Summary</button>
+                        </div>
+                        
+                        <div id="summary-output"></div>
+                        
+                        <div class="output-stats">
+                            <div class="stat-item">Original: <span id="original-word-count">0</span> words</div>
+                            <div class="stat-item">Summary: <span id="summary-word-count">0</span> words</div>
+                            <div class="stat-item">Compression: <span id="compression-ratio">0</span>x</div>
+                            <div class="stat-item">Summary: <span id="summary-percentage">0</span>% of original</div>
+                        </div>
+                        
+                        <div class="keywords-container">
+                            <h3>Keywords:</h3>
+                            <div id="keywords-list"></div>
+                        </div>
+
+                        <!-- add processing info here-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const summarizerType = document.getElementById('summarizer-type');
+            const extractiveOptions = document.getElementById('extractive-options');
+            const abstractiveOptions = document.getElementById('abstractive-options');
+            const openaiOptions = document.getElementById('openai-options');
+            const huggingfaceOptions = document.getElementById('huggingface-options');
+            const hybridOptions = document.getElementById('hybrid-options');
+            const hybridMode = document.getElementById('hybrid-mode');
+            const hybridOpenaiOptions = document.getElementById('hybrid-openai-options');
+            const hybridHuggingfaceOptions = document.getElementById('hybrid-huggingface-options');
+            
+            const summaryRate = document.getElementById('summary-rate');
+            const summaryRateValue = document.getElementById('summary-rate-value');
+            const targetPercent = document.getElementById('target-percent');
+            const targetPercentValue = document.getElementById('target-percent-value');
+            
+            const fileInput = document.getElementById('file-input');
+            const fileName = document.getElementById('file-name');
+            const textInput = document.getElementById('text-input');
+            
+            const summarizeBtn = document.getElementById('summarize-btn');
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            
+            const resultsContainer = document.getElementById('results-container');
+            const summaryOutput = document.getElementById('summary-output');
+            const originalWordCount = document.getElementById('original-word-count');
+            const summaryWordCount = document.getElementById('summary-word-count');
+            const compressionRatio = document.getElementById('compression-ratio');
+            const summaryPercentage = document.getElementById('summary-percentage');
+            const keywordsList = document.getElementById('keywords-list');
+            
+            const copyBtn = document.getElementById('copy-btn');
+            
+            // Tab functionality
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and panes
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanes.forEach(pane => pane.classList.add('hidden'));
+                    
+                    // Add active class to current button and show corresponding pane
+                    button.classList.add('active');
+                    const tabId = button.dataset.tab;
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+            
+            // Update range slider displays
+            summaryRate.addEventListener('input', () => {
+                summaryRateValue.textContent = `${summaryRate.value}%`;
+            });
+            
+            targetPercent.addEventListener('input', () => {
+                targetPercentValue.textContent = `${targetPercent.value}%`;
+            });
+            
+            // File input handling
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    fileName.textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        textInput.value = e.target.result;
+                    };
+                    reader.readAsText(file);
+                } else {
+                    fileName.textContent = '';
+                }
+            });
+            
+            // Show/hide options based on summarizer type
+            summarizerType.addEventListener('change', updateOptions);
+            
+            function updateOptions() {
+                // Hide all option groups first
+                extractiveOptions.classList.add('hidden');
+                abstractiveOptions.classList.add('hidden');
+                openaiOptions.classList.add('hidden');
+                huggingfaceOptions.classList.add('hidden');
+                hybridOptions.classList.add('hidden');
+                
+                const type = summarizerType.value;
+                
+                // Show appropriate options
+                if (type === 'extractive') {
+                    extractiveOptions.classList.remove('hidden');
+                } else if (type === 'abstractive_openai') {
+                    abstractiveOptions.classList.remove('hidden');
+                    openaiOptions.classList.remove('hidden');
+                } else if (type === 'abstractive_huggingface') {
+                    abstractiveOptions.classList.remove('hidden');
+                    huggingfaceOptions.classList.remove('hidden');
+                } else if (type === 'hybrid') {
+                    abstractiveOptions.classList.remove('hidden');
+                    hybridOptions.classList.remove('hidden');
+                    // Show the appropriate model options for hybrid
+                    updateHybridOptions();
+                }
+            }
+            
+            // Handle hybrid mode changes
+            hybridMode.addEventListener('change', updateHybridOptions);
+            
+            function updateHybridOptions() {
+                if (hybridMode.value === 'openai') {
+                    hybridOpenaiOptions.classList.remove('hidden');
+                    hybridHuggingfaceOptions.classList.add('hidden');
+                } else {
+                    hybridOpenaiOptions.classList.add('hidden');
+                    hybridHuggingfaceOptions.classList.remove('hidden');
+                }
+            }
+            
+            // Initialize options display
+            updateOptions();
+            
+            // Handle form submission
+            summarizeBtn.addEventListener('click', generateSummary);
+            
+            function generateSummary() {
+                // Validate input
+                const text = textInput.value.trim();
+                if (!text) {
+                    showError('Please enter or upload some text to summarize.');
+                    return;
+                }
+                
+                const type = summarizerType.value;
+                
+                // Validate API keys for abstractive methods
+                if (type === 'abstractive_openai' && !document.getElementById('openai-key').value.trim()) {
+                    showError('OpenAI API key is required for abstractive summarization.');
+                    return;
+                } else if (type === 'abstractive_huggingface' && !document.getElementById('hf-key').value.trim()) {
+                    showError('Hugging Face API key is required for abstractive summarization.');
+                    return;
+                } else if (type === 'hybrid') {
+                    if (hybridMode.value === 'openai' && !document.getElementById('hybrid-openai-key').value.trim()) {
+                        showError('OpenAI API key is required for hybrid summarization with OpenAI.');
+                        return;
+                    } else if (hybridMode.value === 'huggingface' && !document.getElementById('hybrid-hf-key').value.trim()) {
+                        showError('Hugging Face API key is required for hybrid summarization with Hugging Face.');
+                        return;
+                    }
+                }
+                
+                // Clear previous errors and show loading
+                errorMessage.textContent = '';
+                loading.style.display = 'block';
+                
+                // Prepare request data
+                const requestData = {
+                    text: text,
+                    summarizerType: type,
+                    summaryRate: parseFloat(summaryRate.value) / 100,
+                    targetPercent: parseFloat(targetPercent.value)
+                };
+                
+                // Add appropriate provider-specific options
+                if (type === 'abstractive_openai') {
+                    requestData.openAIKey = document.getElementById('openai-key').value.trim();
+                    requestData.openAIModel = document.getElementById('openai-model').value;
+                    
+                    const baseUrl = document.getElementById('openai-url').value.trim();
+                    if (baseUrl) {
+                        requestData.openAIBaseURL = baseUrl;
+                    }
+                } else if (type === 'abstractive_huggingface') {
+                    requestData.huggingFaceKey = document.getElementById('hf-key').value.trim();
+                    requestData.huggingFaceModel = document.getElementById('hf-model').value;
+                    
+                    const hfUrl = document.getElementById('hf-url').value.trim();
+                    if (hfUrl) {
+                        requestData.huggingFaceURL = hfUrl;
+                    }
+                    
+                    const maxLength = document.getElementById('max-length').value;
+                    if (maxLength) {
+                        requestData.maxLength = parseInt(maxLength);
+                    }
+                    
+                    const minLength = document.getElementById('min-length').value;
+                    if (minLength) {
+                        requestData.minLength = parseInt(minLength);
+                    }
+                } else if (type === 'hybrid') {
+                    if (hybridMode.value === 'openai') {
+                        requestData.openAIKey = document.getElementById('hybrid-openai-key').value.trim();
+                        requestData.openAIModel = document.getElementById('hybrid-openai-model').value;
+                    } else {
+                        requestData.huggingFaceKey = document.getElementById('hybrid-hf-key').value.trim();
+                        requestData.huggingFaceModel = document.getElementById('hybrid-hf-model').value;
+                    }
+                }
+                
+                // Send the request
+                fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Hide loading and show results
+                    loading.style.display = 'none';
+                    displayResults(data);
+                    
+                    // Switch to output tab
+                    document.querySelector('.tab-button[data-tab="output-tab"]').click();
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    showError(`Error: ${error.message}`);
+                });
+            }
+            
+            function displayResults(data) {
+                // Display summary
+                summaryOutput.innerHTML = `<p>${data.summary}</p>`;
+                
+                // Update stats
+                originalWordCount.textContent = data.originalWordCount;
+                summaryWordCount.textContent = data.summaryWordCount;
+                compressionRatio.textContent = data.compressionRatio;
+                summaryPercentage.textContent = data.summaryPercentage;
+                
+                // Display keywords
+                keywordsList.innerHTML = '';
+                if (data.keywords && data.keywords.length > 0) {
+                    data.keywords.forEach(keyword => {
+                        const keywordElement = document.createElement('span');
+                        keywordElement.classList.add('keyword');
+                        keywordElement.textContent = keyword;
+                        keywordsList.appendChild(keywordElement);
+                    });
+                } else {
+                    keywordsList.innerHTML = '<p>No keywords extracted</p>';
+                }
+                
+                // Show results container
+                resultsContainer.classList.remove('hidden');
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Copy summary button
+            copyBtn.addEventListener('click', () => {
+                const summaryText = summaryOutput.textContent;
+                navigator.clipboard.writeText(summaryText)
+                    .then(() => {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        showError('Failed to copy text: ' + err);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

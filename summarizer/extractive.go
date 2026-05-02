@@ -412,6 +412,10 @@ func buildSentenceSimilarityMatrix(sentences []prose.Sentence) [][]float64 {
 	// Initialize the matrix
 	matrix := make([][]float64, sentenceCount)
 
+	for i := range matrix {
+		matrix[i] = make([]float64, sentenceCount)
+	}
+
 	// Preprocessing step: create words sets for each sentence
 	sentenceWords := make([]map[string]bool, sentenceCount)
 	for i, sentence := range sentences {
