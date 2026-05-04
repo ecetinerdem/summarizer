@@ -27,6 +27,15 @@ func (ts *TextSummarizer) GenerateSummary() string {
 	case AbstractiveHuggingFace:
 
 	case Hybrid:
+		summary, err := ts.generateHybridSummary()
+		if err != nil {
+			ts.fallbackReason = fmt.Sprintf("Error from hybrid: %v", err)
+			log.Printf("Falling back to extractive\n", ts.fallbackReason)
+			summary = ts.generateExtractiveSummary()
+			ts.actualMethod = "Extractive"
+		} else {
+			ts.actualMethod = "Hybrid"
+		}
 
 	default:
 		// Default to extractive
