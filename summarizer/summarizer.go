@@ -1,5 +1,10 @@
 package summarizer
 
+import (
+	"fmt"
+	"log"
+)
+
 func (ts *TextSummarizer) GenerateSummary() string {
 	var summary string
 
@@ -9,6 +14,15 @@ func (ts *TextSummarizer) GenerateSummary() string {
 	// Decide which summarizer to use
 	switch ts.summarizerType {
 	case AbstractiveOpenAI:
+		summary, err := ts.generateOpenAISummary()
+		if err != nil {
+			ts.fallbackReason = fmt.Sprintf("Error from openAI abstractive: %v", err)
+			log.Printf("Falling back to extractive\n", ts.fallbackReason)
+			summary = ts.generateExtractiveSummary()
+			ts.actualMethod = "Extractive"
+		} else {
+			ts.actualMethod = "AbstractiveOpenAI"
+		}
 
 	case AbstractiveHuggingFace:
 
